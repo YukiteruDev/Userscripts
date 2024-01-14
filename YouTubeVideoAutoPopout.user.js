@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube Video Auto Pop-out
 // @namespace    http://tampermonkey.net/
-// @version      1.00
+// @version      1.01
 // @description  Pop-out video to bottom-right when scrolling down to comments
 // @author       You
 // @match        https://www.youtube.com/*
