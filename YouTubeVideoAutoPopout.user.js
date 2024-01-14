@@ -5,6 +5,7 @@
 // @description  Pop-out video to bottom-right when scrolling down to comments
 // @author       You
 // @match        https://www.youtube.com/*
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
 // @grant        GM_addStyle
 // @license      MIT
 // ==/UserScript==
