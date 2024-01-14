@@ -39,7 +39,7 @@ function getLikeButton() {
 }
 
 function getVideo() {
-  return document.querySelector("video.video-stream");
+  return document.querySelector("video.html5-main-video");
 }
 
 function isLiked() {
