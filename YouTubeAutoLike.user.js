@@ -1,0 +1,94 @@
+// ==UserScript==
+// @name         YouTube Auto Like
+// @namespace    http://tampermonkey.net/
+// @version      1.20
+// @description  Automatically likes a video or livestream on YouTube
+// @author       Yukiteru
+// @match        https://www.youtube.com/*
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        GM_registerMenuCommand
+// @grant        GM_unregisterMenuCommand
+// @require      https://greasyfork.org/scripts/470224-tampermonkey-config/code/Tampermonkey%20Config.js
+// @license      MIT
+// ==/UserScript==
+
+function printLog(message) {
+  console.log(`[YouTube Auto Like]: ${message}`);
+}
+
+const config_desc = {
+  ratio: {
+    name: "Like after percentage",
+    processor: "int_range-1-100",
+    value: 50,
+  },
+  only_sub: {
+    name: "Only like subscribed channels",
+    input: "current",
+    processor: "not",
+    formatter: "boolean",
+    value: true,
+  },
+};
+const config = GM_config(config_desc);
+
+function getLikeButton() {
+  return document.querySelector("like-button-view-model button");
+}
+
+function getVideo() {
+  return document.querySelector("video.video-stream");
+}
+
+function isLiked() {
+  return getLikeButton().getAttribute("aria-pressed") === "true";
+}
+
+function isSubscribed() {
+  const subscribeButton = document.querySelector("ytd-subscribe-button-renderer");
+  return subscribeButton.hasAttribute("subscribed");
+}
+
+function shouldLike() {
+  if (isSubscribed()) return true;
+  return !config.only_sub;
+}
+
+function isLivestream() {
+  const liveBadge = document.querySelector(".ytp-live");
+  return liveBadge !== null;
+}
+
+function like() {
+  if (isLiked()) printLog("user liked manually");
+  else getLikeButton().click();
+  getVideo().removeEventListener("timeupdate", listener);
+}
+
+function listener() {
+  const video = getVideo();
+  const percentage = config.ratio / 100;
+  if (video.currentTime / video.duration > percentage && shouldLike()) {
+    like(video);
+  }
+}
+
+function findLikeButton() {
+  const observer = new MutationObserver((mutations, observer) => {
+    const likeButton = getLikeButton();
+    if (!likeButton) return;
+
+    printLog("like button checked");
+    observer.disconnect();
+
+    if (!shouldLike()) return false;
+    if (isLivestream() && shouldLike()) return like(); // like and exit if this is a livestream
+
+    getVideo().addEventListener("timeupdate", listener);
+  });
+  observer.observe(document, { childList: true, subtree: true });
+}
+
+document.addEventListener("yt-navigate-finish", findLikeButton());
