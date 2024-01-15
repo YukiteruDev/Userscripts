@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube Video Auto Pop-out
 // @namespace    http://tampermonkey.net/
-// @version      1.01
+// @version      1.02
 // @description  Pop-out video to bottom-right when scrolling down to comments
 // @author       You
 // @match        https://www.youtube.com/*
@@ -49,8 +49,14 @@
     return document.querySelector("video.html5-main-video");
   }
 
-  function setStyle(elem, propertyObject) {
-    for (var property in propertyObject) elem.style[property] = propertyObject[property];
+  function videoHasEnded() {
+    const video = getVideoPlayer();
+    const progress = video.currentTime / video.duration;
+    return progress === 1;
+  }
+
+  function setStyles(elem, propertyObject) {
+    for (let property in propertyObject) elem.style[property] = propertyObject[property];
   }
 
   function getVideoSize(fixed = false) {
@@ -67,6 +73,11 @@
 
   function setButtonVisible(button, visible) {
     button.style.display = visible ? "block" : "none";
+  }
+
+  function removeFixedContainer() {
+    const container = document.querySelector("#fixed-container");
+    if (container) container.remove();
   }
 
   function moveVideoToCorner() {
@@ -88,7 +99,7 @@
     const videoContainer = document.createElement("div");
     videoContainer.setAttribute("id", "fixed-container");
     const containerStyle = { ...fixedStyles, cursor: "move" };
-    setStyle(videoContainer, containerStyle);
+    setStyles(videoContainer, containerStyle);
 
     const pauseButton = document.createElement("div");
     setPlayIcon(pauseButton, videoPlayer.paused);
@@ -97,6 +108,7 @@
     });
     videoPlayer.addEventListener("play", () => setPlayIcon(pauseButton, false));
     videoPlayer.addEventListener("pause", () => setPlayIcon(pauseButton, true));
+    videoPlayer.addEventListener("ended", () => restoreVideoPosition());
 
     const buttonStyles = {
       display: "none",
@@ -107,10 +119,10 @@
       cursor: "pointer",
       zIndex: "1100",
     };
-    setStyle(pauseButton, buttonStyles);
+    setStyles(pauseButton, buttonStyles);
     videoContainer.appendChild(pauseButton);
 
-    setStyle(videoPlayer, { width: "100%", height: "100%" });
+    setStyles(videoPlayer, { width: "100%", height: "100%" });
 
     videoPlayer.style.pointerEvents = "none";
     videoPlayer.classList.add("in-corner");
@@ -127,7 +139,7 @@
     const videoPlayer = getVideoPlayer();
     if (!videoPlayer.classList.contains("in-corner")) return false;
 
-    setStyle(originalStyles);
+    setStyles(originalStyles);
     videoPlayer.style.pointerEvents = "auto";
     videoPlayer.classList.remove("in-corner");
     document.querySelector(".html5-video-container").appendChild(videoPlayer);
@@ -179,9 +191,8 @@
   function scrollListener() {
     const playerSection = document.querySelector("#player");
     const playerRect = playerSection.getBoundingClientRect();
-    printLog(playerRect.bottom);
 
-    if (playerRect.bottom <= 0) {
+    if (playerRect.bottom <= 0 && !videoHasEnded()) {
       moveVideoToCorner();
     } else {
       restoreVideoPosition();
@@ -191,9 +202,7 @@
   document.addEventListener("yt-navigate-finish", () => {
     const isVideoPage = location.pathname === "/watch";
     if (isVideoPage) return document.addEventListener("scroll", scrollListener);
-
     document.removeEventListener("scroll", scrollListener);
-    const container = document.querySelector("#fixed-container");
-    if (container) container.remove();
+    removeFixedContainer();
   });
 })();
