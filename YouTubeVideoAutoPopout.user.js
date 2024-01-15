@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube Video Auto Pop-out
 // @namespace    http://tampermonkey.net/
-// @version      1.02
+// @version      1.03
 // @description  Pop-out video to bottom-right when scrolling down to comments
 // @author       You
 // @match        https://www.youtube.com/*
@@ -53,6 +53,10 @@
     const video = getVideoPlayer();
     const progress = video.currentTime / video.duration;
     return progress === 1;
+  }
+
+  function isValidVideo() {
+    return getVideoPlayer().duration > 0;
   }
 
   function setStyles(elem, propertyObject) {
@@ -192,7 +196,7 @@
     const playerSection = document.querySelector("#player");
     const playerRect = playerSection.getBoundingClientRect();
 
-    if (playerRect.bottom <= 0 && !videoHasEnded()) {
+    if (playerRect.bottom <= 0 && isValidVideo() && !videoHasEnded()) {
       moveVideoToCorner();
     } else {
       restoreVideoPosition();
