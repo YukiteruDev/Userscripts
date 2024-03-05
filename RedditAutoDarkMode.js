@@ -6,6 +6,7 @@
 // @version     1.0
 // @author      Yukiteru
 // @description Change Reddit's theme based on your system theme
+// @license     MIT
 // ==/UserScript==
 
 function getToggleSwitch() {
