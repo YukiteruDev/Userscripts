@@ -1,16 +1,18 @@
 // ==UserScript==
 // @name         YouTube Video Auto Pop-out
 // @namespace    http://tampermonkey.net/
-// @version      1.03
+// @version      1.04
 // @description  Pop-out video to bottom-right when scrolling down to comments
 // @author       You
 // @match        https://www.youtube.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
 // @grant        GM_addStyle
 // @license      MIT
+// @downloadURL  https://update.greasyfork.org/scripts/484817/YouTube%20Video%20Auto%20Pop-out.user.js
+// @updateURL    https://update.greasyfork.org/scripts/484817/YouTube%20Video%20Auto%20Pop-out.meta.js
 // ==/UserScript==
 
-(function () {
+(function() {
   "use strict";
 
   let originalStyles;
@@ -67,7 +69,10 @@
     const rect = getVideoPlayer().getBoundingClientRect();
     const width = fixed ? rect.width / 2 : rect.width;
     const height = fixed ? rect.height / 2 : rect.height;
-    return { width: `${width}px`, height: `${height}px` };
+    return {
+      width: `${width}px`,
+      height: `${height}px`
+    };
   }
 
   function setPlayIcon(button, paused) {
@@ -90,8 +95,8 @@
 
     originalStyles = {
       position: videoPlayer.style.position,
-      top: videoPlayer.style.top,
-      left: videoPlayer.style.left,
+      // top: videoPlayer.style.top,
+      // left: videoPlayer.style.left,
       width: getVideoSize().width,
       height: getVideoSize().height,
       zIndex: videoPlayer.style.zIndex,
@@ -102,7 +107,10 @@
 
     const videoContainer = document.createElement("div");
     videoContainer.setAttribute("id", "fixed-container");
-    const containerStyle = { ...fixedStyles, cursor: "move" };
+    const containerStyle = {
+      ...fixedStyles,
+      cursor: "move"
+    };
     setStyles(videoContainer, containerStyle);
 
     const pauseButton = document.createElement("div");
@@ -126,7 +134,10 @@
     setStyles(pauseButton, buttonStyles);
     videoContainer.appendChild(pauseButton);
 
-    setStyles(videoPlayer, { width: "100%", height: "100%" });
+    setStyles(videoPlayer, {
+      width: "100%",
+      height: "100%"
+    });
 
     videoPlayer.style.pointerEvents = "none";
     videoPlayer.classList.add("in-corner");
@@ -192,11 +203,22 @@
     }
   }
 
+  function isElementInvisible(el) {
+    const rect = el.getBoundingClientRect();
+
+    return (
+      rect.bottom <= 0 ||
+      rect.right <= 0 ||
+      rect.top >= (window.innerHeight || document.documentElement.clientHeight) ||
+      rect.left >= (window.innerWidth || document.documentElement.clientWidth)
+    );
+  }
+
   function scrollListener() {
     const playerSection = document.querySelector("#player");
-    const playerRect = playerSection.getBoundingClientRect();
+    const playerIsVisible = isElementInvisible(playerSection);
 
-    if (playerRect.bottom <= 0 && isValidVideo() && !videoHasEnded()) {
+    if (playerIsVisible && isValidVideo() && !videoHasEnded()) {
       moveVideoToCorner();
     } else {
       restoreVideoPosition();
