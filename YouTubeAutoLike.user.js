@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube Auto Like
 // @namespace    http://tampermonkey.net/
-// @version      1.21
+// @version      1.22
 // @description  Automatically likes a video or livestream on YouTube
 // @author       Yukiteru
 // @match        https://www.youtube.com/*
@@ -53,7 +53,7 @@ function isSubscribed() {
 
 function shouldLike() {
   if (isSubscribed()) return true;
-  return !config.only_sub;
+  return !config.get('only_sub');
 }
 
 function isLivestream() {
@@ -69,7 +69,7 @@ function like() {
 
 function listener() {
   const video = getVideo();
-  const percentage = config.ratio / 100;
+  const percentage = config.get('ratio') / 100;
   if (video.currentTime / video.duration > percentage && shouldLike()) {
     like(video);
   }
