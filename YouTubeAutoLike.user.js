@@ -32,7 +32,7 @@ const config_desc = {
     value: true,
   },
 };
-const config = GM_config(config_desc);
+const config = new GM_config(config_desc);
 
 function getLikeButton() {
   return document.querySelector("like-button-view-model button");
