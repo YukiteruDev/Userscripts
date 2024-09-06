@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube Auto Like
 // @namespace    http://tampermonkey.net/
-// @version      1.22
+// @version      1.23
 // @description  Automatically likes a video or livestream on YouTube
 // @author       Yukiteru
 // @match        https://www.youtube.com/*
