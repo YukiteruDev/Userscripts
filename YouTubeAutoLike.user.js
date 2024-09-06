@@ -91,4 +91,4 @@ function findLikeButton() {
   observer.observe(document, { childList: true, subtree: true });
 }
 
-document.addEventListener("yt-navigate-finish", findLikeButton());
+document.addEventListener("yt-navigate-finish", findLikeButton);
