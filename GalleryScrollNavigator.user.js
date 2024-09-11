@@ -12,6 +12,7 @@
 // @grant        GM_unregisterMenuCommand
 // @grant        GM_config
 // @require      https://greasyfork.org/scripts/470224-tampermonkey-config/code/Tampermonkey%20Config.js
+// @license      MIT
 // ==/UserScript==
 
 (function() {
