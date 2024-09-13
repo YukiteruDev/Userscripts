@@ -3,14 +3,14 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.reddit.com/*
 // @grant       none
-// @version     1.0
+// @version     1.01
 // @author      Yukiteru
 // @description Change Reddit's theme based on your system theme
 // @license     MIT
 // ==/UserScript==
 
 function getToggleSwitch() {
-  return document.querySelector('faceplate-switch-input');
+  return document.querySelector('#darkmode-list-item > div > span.flex.items-center.shrink-0 > span > faceplate-switch-input');
 }
 
 function isDarkMode() {
