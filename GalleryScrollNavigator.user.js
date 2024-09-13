@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         Gallery Scroll Navigator
 // @namespace    https://github.com/YukiteruDev
-// @version      1.24
+// @version      1.26
 // @description  Automatically navigate to the next page when scrolling to the bottom of image gallery websites. Optimized for Hitomi and Pixiv.
 // @author       Yukiteru
 // @match        https://hitomi.la/*
+// @match        https://f95zone.to/*
 // @match        https://www.pixiv.net/*
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -64,6 +65,10 @@
       host: 'www.pixiv.net',
       selector: 'nav > a:last-child'
     },
+    f95zone: {
+      host: 'f95zone.to',
+      selector: '.pageNav-jump--next'
+    }
   };
 
   function getCurrentSite() {
