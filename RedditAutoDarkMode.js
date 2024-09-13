@@ -3,7 +3,7 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.reddit.com/*
 // @grant       none
-// @version     1.01
+// @version     1.02
 // @author      Yukiteru
 // @description Change Reddit's theme based on your system theme
 // @license     MIT
@@ -22,7 +22,7 @@ function toggleTheme(isDark) {
 }
 
 const darkMedia = window.matchMedia('(prefers-color-scheme: dark)');
-setTimeout(() => toggleTheme(darkMedia.matches), 300)
+setTimeout(() => toggleTheme(darkMedia.matches), 500)
 
 darkMedia.addEventListener('change', e => {
   toggleTheme(e.matches); // toggle theme when system theme is changed
