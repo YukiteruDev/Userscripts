@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gallery Scroll Navigator
 // @namespace    https://github.com/YukiteruDev
-// @version      1.28
+// @version      1.29
 // @description  Automatically navigate to the next page when scrolling to the bottom of image gallery websites. Optimized for Hitomi and Pixiv.
 // @author       Yukiteru
 // @match        https://hitomi.la/*
@@ -9,9 +9,10 @@
 // @match        https://www.pixiv.net/*
 // @grant        GM_setValue
 // @grant        GM_getValue
+// @grant        GM_deleteValue
 // @grant        GM_registerMenuCommand
 // @grant        GM_unregisterMenuCommand
-// @grant        GM_config
+// @grant        GM_addValueChangeListener
 // @require      https://greasyfork.org/scripts/470224-tampermonkey-config/code/Tampermonkey%20Config.js
 // @license      MIT
 // ==/UserScript==
