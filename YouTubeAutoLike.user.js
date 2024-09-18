@@ -1,15 +1,17 @@
 // ==UserScript==
 // @name         YouTube Auto Like
 // @namespace    http://tampermonkey.net/
-// @version      1.24
+// @version      1.25
 // @description  Automatically likes a video or livestream on YouTube
 // @author       Yukiteru
 // @match        https://www.youtube.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
 // @grant        GM_setValue
 // @grant        GM_getValue
+// @grant        GM_deleteValue
 // @grant        GM_registerMenuCommand
 // @grant        GM_unregisterMenuCommand
+// @grant        GM_addValueChangeListener
 // @require      https://greasyfork.org/scripts/470224-tampermonkey-config/code/Tampermonkey%20Config.js
 // @license      MIT
 // ==/UserScript==
