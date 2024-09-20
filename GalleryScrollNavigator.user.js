@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Gallery Scroll Navigator
 // @namespace    https://github.com/YukiteruDev
-// @version      1.30
-// @description  Automatically navigate to the next/prev page when scrolling at the bottom/top of image sites.
+// @version      1.31
+// @description  Automatically navigate to the next page when scrolling to the bottom of image gallery websites. Optimized for Hitomi and Pixiv.
 // @author       Yukiteru
 // @match        https://hitomi.la/*
 // @match        https://www.pixiv.net/*
@@ -38,9 +38,9 @@
   const config = new GM_config(config_desc);
 
   let scrollCounter = 0;
-  let topScrollCounter = 0;
   let progressBarBottom;
   let progressBarTop;
+  let disablePaging = false;
 
   // Function to create the progress bar element
   function createProgressBar(position = 'bottom') {
@@ -141,7 +141,6 @@
 
   function resetScrollProgress() {
     scrollCounter = 0;
-    topScrollCounter = 0;
     updateProgressBar(0, progressBarBottom);
     updateProgressBar(0, progressBarTop);
   }
@@ -162,34 +161,30 @@
     }
 
     document.addEventListener("wheel", event => {
+      if (disablePaging) return;
+
       const isBottom = checkIsBottom();
       const isTop = checkIsTop();
       const isScrollingDown = checkIsScrollingDown(event);
 
       const site = getCurrentSite();
 
-      if (isTop && !isScrollingDown && site.getPageButton('prev')) {
-        topScrollCounter++;
-        updateProgressBar(topScrollCounter, progressBarTop);
-        printLog(`Scrolls at top: ${topScrollCounter}`);
+      const isPagingTop = isTop && !isScrollingDown && site.getPageButton('prev');
+      const isPagingBottom = isBottom && isScrollingDown && site.getPageButton('next');
 
-        const maxScrolls = config.get('scrolls');
-        if (topScrollCounter >= maxScrolls) {
-          loadPrevPage();
-          resetScrollProgress();
-        }
-        return;
-      }
-
-      if (isBottom && isScrollingDown && site.getPageButton('next')) {
+      if (isPagingTop || isPagingBottom) {
         scrollCounter++;
-        updateProgressBar(scrollCounter, progressBarBottom);
-        printLog(`Scrolls at bottom: ${scrollCounter}`);
+        const progressBar = isPagingTop ? progressBarTop : progressBarBottom;
+        const loadPage = isPagingTop ? loadPrevPage : loadNextPage;
+
+        updateProgressBar(scrollCounter, progressBar);
+        printLog(`Scrolls at ${isPagingTop ? 'top' : 'bottom'}: ${scrollCounter}`);
 
         const maxScrolls = config.get('scrolls');
         if (scrollCounter >= maxScrolls) {
-          loadNextPage();
+          disablePaging = true;
           resetScrollProgress();
+          loadPage();
         }
         return;
       }
