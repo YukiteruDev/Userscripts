@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gallery Scroll Navigator
 // @namespace    https://github.com/YukiteruDev
-// @version      1.31
+// @version      1.32
 // @description  Automatically navigate to the next page when scrolling to the bottom of image gallery websites. Optimized for Hitomi and Pixiv.
 // @author       Yukiteru
 // @match        https://hitomi.la/*
@@ -207,4 +207,6 @@
 
   const observer = new MutationObserver(() => checkPagination());
   observer.observe(document.body, { childList: true, subtree: true });
+
+  window.navigation.addEventListener("navigate", () => disablePaging = false); // for ajax-paging sites
 })();
