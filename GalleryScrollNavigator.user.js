@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gallery Scroll Navigator
 // @namespace    https://github.com/YukiteruDev
-// @version      1.32
+// @version      1.33
 // @description  Automatically navigate to the next page when scrolling to the bottom of image gallery websites. Optimized for Hitomi and Pixiv.
 // @author       Yukiteru
 // @match        https://hitomi.la/*
@@ -146,7 +146,7 @@
   }
 
   function checkIsBottom() {
-    return (window.innerHeight + window.scrollY).toFixed() >= document.body.offsetHeight;
+    return (window.innerHeight + window.scrollY).toFixed() >= document.body.scrollHeight;
   }
 
   function checkIsTop() {
@@ -154,12 +154,6 @@
   }
 
   function setWheelEvent() {
-    if (location.host === 'nhentai.net') {
-      // adjust nhentai's body height since it's fucked up
-      const contentHeight = document.querySelector('#content').offsetHeight;
-      document.body.style.height = `${contentHeight}px`;
-    }
-
     document.addEventListener("wheel", event => {
       if (disablePaging) return;
 
