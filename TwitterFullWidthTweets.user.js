@@ -6,6 +6,7 @@
 // @version        1.00
 // @author         Yukiteru
 // @description    Display Tweets in Full-Width
+// @license        MIT
 // ==/UserScript==
 
 
