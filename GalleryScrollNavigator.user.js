@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Gallery Scroll Navigator
 // @namespace    https://github.com/YukiteruDev
-// @version      1.33
-// @description  Automatically navigate to the next page when scrolling to the bottom of image gallery websites. Optimized for Hitomi and Pixiv.
+// @version      1.34
+// @description  Automatically navigate to the next page when scrolling to the bottom of image sites.
 // @author       Yukiteru
 // @match        https://hitomi.la/*
 // @match        https://www.pixiv.net/*
