@@ -2,6 +2,7 @@
 // @name           Full Width Tweets for Twitter
 // @namespace      Violentmonkey Scripts
 // @match          https://x.com/*
+// @match          https://twitter.com/*
 // @grant          none
 // @version        1.00
 // @author         Yukiteru
