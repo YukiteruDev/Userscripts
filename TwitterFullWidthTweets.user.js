@@ -4,7 +4,7 @@
 // @match          https://x.com/*
 // @match          https://twitter.com/*
 // @grant          none
-// @version        1.00
+// @version        1.01
 // @author         Yukiteru
 // @description    Display Tweets in Full-Width
 // @license        MIT
