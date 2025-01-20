@@ -95,12 +95,13 @@ function duplicateViewCount(chatWindow) {
 
   function updateDuplicateText() {
     const ariaLabel = originalCount.getAttribute("aria-label");
-    if (ariaLabel) {
-      duplicateCount.textContent = ariaLabel.trim();
-    }
+    duplicateCount.textContent = ariaLabel.trim();
   }
 
+  updateDuplicateText();
+
   const observer = new MutationObserver(updateDuplicateText);
+
   observer.observe(originalCount, {
     attributes: true,
     attributeFilter: ["aria-label"],
@@ -124,15 +125,16 @@ function observeChatCollapsed(chat) {
       printLog("chat opened");
       const offset = getOffsetHeight();
       chat.style.height = `calc(100vh - ${offset}px)`;
+      observeChatWindow();
     }
   });
 
   observer.observe(chat, {
-    attributes: true, // Observe attribute changes
-    attributeFilter: ["collapsed"], // Only listen for `collapsed` changes
+    attributes: true,
+    attributeFilter: ["collapsed"],
   });
 
-  console.log("[YouTube UI Edits]: Chat `collapsed` observer attached.");
+  printLog("Chat `collapsed` observer attached.");
 }
 
 function observeVideoElement() {
