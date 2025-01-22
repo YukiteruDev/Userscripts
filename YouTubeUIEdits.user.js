@@ -3,13 +3,19 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.youtube.com/watch*
 // @grant       none
-// @version     1.01
+// @version     0.10
 // @author      -
 // @description 2025/1/18 20:16:58
 // ==/UserScript==
 
 function printLog(message) {
   console.log(`[YouTube UI Edits]: ${message}`);
+}
+
+function getVideoId() {
+  const url = new URL(window.location.href);
+  const videoId = url.searchParams.get("v");
+  return videoId;
 }
 
 function isLivestream() {
@@ -40,7 +46,7 @@ function setPrimaryStyles(primary) {
 
   setContainerSize();
   if (isLivestream()) {
-    observeChatContainer();
+    observeChatFrame();
   }
 }
 
@@ -53,30 +59,44 @@ function setContainerSize() {
   ytdPlayer.style.borderRadius = 0;
 }
 
-function observeChatContainer() {
+function observeChatFrame() {
   const observer = new MutationObserver(() => {
     const chat = document.querySelector("ytd-live-chat-frame");
-    if (chat) {
-      setChatSize(chat);
-      observeChatCollapsed(chat);
-      observeChatWindow();
-      observer.disconnect();
-    }
+    const chatFrame = document.querySelector("iframe#chatframe");
+    if (!chat || !chatFrame) return;
+
+    setChatSize(chat);
+    observeChatCollapsed(chat);
+    observeChatWindow();
+    observer.disconnect();
   });
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
 function observeChatWindow() {
   const observer = new MutationObserver(() => {
-    const chatFrame = document.querySelector("iframe#chatframe");
-    if (!chatFrame) return;
     printLog("chat frame detected");
 
+    const chatFrame = document.querySelector("iframe#chatframe");
     const chatWindow = chatFrame.contentWindow.document.querySelector("#chat-messages");
     if (!chatWindow) return;
     printLog("chat window detected");
 
     observer.disconnect();
+
+    const videoId = getVideoId();
+    const checked = chatWindow.classList.contains("checked");
+    const sameVideo = chatWindow.classList.contains(videoId);
+
+    if (checked && !sameVideo) {
+      printLog("chat frame outdated");
+      // fix view count gone after redirection
+      setTimeout(() => observeChatWindow(), 500);
+      return;
+    } else {
+      chatWindow.classList.add("checked");
+      chatWindow.classList.add(videoId);
+    }
 
     duplicateViewCount(chatWindow);
   });
@@ -84,6 +104,8 @@ function observeChatWindow() {
 }
 
 function duplicateViewCount(chatWindow) {
+  if (chatWindow.classList.contains("view-count")) return;
+
   const originalCount = document.querySelector("#view-count");
 
   const duplicateCount = document.createElement("span");
@@ -99,6 +121,8 @@ function duplicateViewCount(chatWindow) {
   }
 
   updateDuplicateText();
+
+  chatWindow.classList.add("view-count");
 
   const observer = new MutationObserver(updateDuplicateText);
 
@@ -171,14 +195,31 @@ function findPrimaryContainer() {
     if (primary) {
       setPrimaryStyles(primary);
       observeVideoElement();
+      observeBodyStyles();
       observer.disconnect();
     }
   });
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
-document.addEventListener("yt-navigate-finish", () => {
-  printLog("yt-navigate-finish event detected.");
+function observeBodyStyles() {
+  const observer = new MutationObserver(mutationsList => {
+    for (const mutation of mutationsList) {
+      if (mutation.type === "attributes" && mutation.attributeName === "style") {
+        // fix scrollbars showing up after redirection
+        document.body.style.overflow = "hidden";
+      }
+    }
+  });
+
+  observer.observe(document.body, {
+    attributes: true,
+    attributeFilter: ["style"],
+  });
+}
+
+document.addEventListener("yt-player-updated", () => {
+  printLog("player updated");
   findPrimaryContainer();
 });
 
