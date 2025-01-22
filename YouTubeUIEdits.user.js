@@ -38,11 +38,13 @@ function setPrimaryStyles(primary) {
   if (below) {
     const offset = getOffsetHeight();
     below.style.maxHeight = `calc(100vh - ${offset}px)`;
+    // below.style.padding = "0 10px";
     below.style.overflowY = "scroll";
     below.style.overflowX = "hidden";
     below.style.scrollbarWidth = "none";
   }
   document.body.style.overflow = "hidden";
+  setBelowStyles();
 
   setContainerSize();
   if (isLivestream()) {
@@ -215,6 +217,73 @@ function observeBodyStyles() {
   observer.observe(document.body, {
     attributes: true,
     attributeFilter: ["style"],
+  });
+}
+
+function createDescriptionContainer() {
+  const container = document.createElement("div");
+  container.id = "description-container";
+  // container.style.display = "none";
+  const closeButton = document.createElement("button");
+  closeButton.textContent = "x";
+  container.appendChild(closeButton);
+
+  closeButton.addEventListener("click", () => {
+    container.display = "none";
+  });
+}
+
+function setBelowStyles() {
+  const chatMenu = document.querySelector("#teaser-carousel");
+  chatMenu.style.display = "none";
+
+  const contents = document.querySelector(
+    "ytd-watch-metadata > ytd-metadata-row-container-renderer"
+  );
+  contents.style.display = "none";
+
+  observeVideoDescription();
+}
+
+function setDescriptionStyles(restore = false) {
+  const description = document.querySelector("ytd-watch-metadata #description");
+  if (restore) {
+    description.style.cssText = "";
+    return;
+  }
+
+  const offset = getOffsetHeight();
+  description.style.cssText = `
+    max-height: calc(100vh - ${offset}px);
+    overflow: scroll;
+    scrollbar-width: thin;
+    position: absolute;
+    background: var(--yt-spec-base-background);
+    margin: 0;
+    top: 0;
+    z-index: 9999;
+  `;
+}
+
+function observeVideoDescription() {
+  const metadata = document.querySelector("ytd-watch-metadata");
+  const observer = new MutationObserver(mutationsList => {
+    for (const mutation of mutationsList) {
+      if (mutation.type === "attributes" && mutation.attributeName === "description-collapsed") {
+        const isCollapsed = metadata.hasAttribute("description-collapsed");
+        if (isCollapsed) {
+          printLog("is collapsed");
+          setDescriptionStyles(true);
+        } else {
+          printLog("not collapsed");
+          setDescriptionStyles();
+        }
+      }
+    }
+  });
+  observer.observe(metadata, {
+    attributes: true,
+    attributeFilter: ["description-collapsed"],
   });
 }
 
