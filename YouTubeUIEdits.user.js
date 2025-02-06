@@ -23,11 +23,11 @@ function isLivestream() {
   return liveBadge !== null;
 }
 
-function getOffsetHeight() {
+function getOffsetHeight(offset = 0) {
   const topHeight = document.querySelector("#masthead-container").offsetHeight;
   const playerHeight = document.querySelector("#player").offsetHeight;
-  const offset = playerHeight + topHeight;
-  return offset;
+  const height = playerHeight + topHeight;
+  return height + offset;
 }
 
 function setPrimaryStyles(primary) {
@@ -266,26 +266,27 @@ function setDescriptionStyles(restoring = false) {
     z-index: 1000;
   `;
 
-  const offset = getOffsetHeight() + 40;
-  descriptionInner.style.cssText = `
-    max-height: calc(100vh - ${offset}px);
-    overflow-y: scroll;
-    scrollbar-width: thin;
-    margin: 0;
-    padding: 1rem;
-  `;
+  let headerOffset;
 
   if (descriptionHeader) {
     printLog("description header already exist");
     descriptionHeader.style.display = "flex";
+    headerOffset = descriptionHeader.offsetHeight;
     const collapseButton = description.querySelector("tp-yt-paper-button#collapse");
     descriptionHeader.appendChild(collapseButton);
-    return;
   } else {
     const newDescriptionHeader = createDescriptionHeader();
     description.prepend(newDescriptionHeader);
-    description.classList.add("extended");
+    if (!headerOffset) headerOffset = newDescriptionHeader.offsetHeight;
   }
+
+  const offset = getOffsetHeight(headerOffset);
+  descriptionInner.style.cssText = `
+    max-height: calc(100vh - ${offset}px);
+    overflow-y: scroll;
+    margin: 0;
+    padding: 1rem;
+  `;
 }
 
 function createDescriptionHeader() {
