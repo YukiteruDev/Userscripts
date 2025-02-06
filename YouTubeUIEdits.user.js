@@ -252,7 +252,72 @@ function setBelowStyles() {
   );
   contents.style.display = "none";
 
+  createToggleButton();
   observeVideoDescription();
+}
+
+function observeCommentsHeader() {
+  const observer = new MutationObserver(() => {
+    const comments = document.querySelector("#comments");
+    const commentsHeader = comments.querySelector("#header #title");
+    if (!commentsHeader) {
+      printLog("no header detected");
+      return;
+    }
+    observer.disconnect();
+    const toggleButton = document.querySelector("#toggle-comments");
+    commentsHeader.appendChild(toggleButton);
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+function toggleRelated(toggleButton) {
+  const isRelated = toggleButton.getAttribute("is-related");
+  const comments = document.querySelector("#comments");
+  const related = document.querySelector("#related");
+  if (isRelated === "true") {
+    related.style.display = "none";
+    comments.style.display = "block";
+    toggleButton.setAttribute("is-related", "false");
+    toggleButton.textContent = "Show Related";
+  } else {
+    comments.style.display = "none";
+    related.style.display = "block";
+    toggleButton.setAttribute("is-related", "true");
+    toggleButton.textContent = "Show Comments";
+  }
+  const below = document.querySelector("#below");
+  const offset = document.querySelector("#expandable-metadata").offsetTop;
+  below.scrollTo({ top: offset, behavior: "smooth" });
+}
+
+function createToggleButton() {
+  if (document.querySelector("#toggle-comments")) {
+    printLog("Toggle button already created");
+    return;
+  }
+
+  const comments = document.querySelector("#comments");
+  comments.style.display = "none";
+
+  const toggleButton = document.createElement("button");
+  toggleButton.id = "toggle-comments";
+  toggleButton.classList =
+    "yt-spec-button-shape-next yt-spec-button-shape-next--outline yt-spec-button-shape-next--mono yt-spec-button-shape-next--size-m";
+  toggleButton.style.cssText = `
+    width: 100%;
+    backdrop-filter: blur(15px);
+    position: sticky;
+    top: 0;
+    z-index: 2000;
+    margin-bottom: 1rem;
+  `;
+  toggleButton.textContent = "Show Comments";
+  toggleButton.setAttribute("is-related", "true");
+  toggleButton.addEventListener("click", () => toggleRelated(toggleButton));
+
+  const related = document.querySelector("#related");
+  related.before(toggleButton);
 }
 
 function setDescriptionStyles(restoring = false) {
