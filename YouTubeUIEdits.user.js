@@ -30,6 +30,15 @@ function getOffsetHeight(offset = 0) {
   return height + offset;
 }
 
+function disableBelowScroll() {
+  const below = document.querySelector("#below");
+  below.style.overflow = "hidden";
+}
+function enableBelowScroll() {
+  const below = document.querySelector("#below");
+  below.style.overflow = "hidden scroll";
+}
+
 function setPrimaryStyles(primary) {
   primary.style.margin = 0;
   primary.style.padding = 0;
@@ -38,10 +47,8 @@ function setPrimaryStyles(primary) {
   if (below) {
     const offset = getOffsetHeight();
     below.style.maxHeight = `calc(100vh - ${offset}px)`;
-    // below.style.padding = "0 10px";
-    below.style.overflowY = "scroll";
-    below.style.overflowX = "hidden";
     below.style.scrollbarWidth = "none";
+    enableBelowScroll();
   }
   document.body.style.overflow = "hidden";
   setBelowStyles();
@@ -71,6 +78,7 @@ function observeChatFrame() {
     observeChatCollapsed(chat);
     observeChatWindow();
     observer.disconnect();
+    disableBelowScroll();
   });
   observer.observe(document.body, { childList: true, subtree: true });
 }
@@ -147,11 +155,13 @@ function observeChatCollapsed(chat) {
     if (chat.hasAttribute("collapsed")) {
       printLog("chat closed");
       chat.style.height = "unset";
+      enableBelowScroll();
     } else {
       printLog("chat opened");
       const offset = getOffsetHeight();
       chat.style.height = `calc(100vh - ${offset}px)`;
       observeChatWindow();
+      disableBelowScroll();
     }
   });
 
@@ -323,11 +333,13 @@ function observeVideoDescription() {
       if (mutation.type === "attributes" && mutation.attributeName === "description-collapsed") {
         const isCollapsed = metadata.hasAttribute("description-collapsed");
         if (isCollapsed) {
-          printLog("is collapsed");
+          printLog("description closed");
           setDescriptionStyles(true);
+          enableBelowScroll();
         } else {
-          printLog("not collapsed");
+          printLog("description opened");
           setDescriptionStyles();
+          disableBelowScroll();
         }
       }
     }
