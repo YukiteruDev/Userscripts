@@ -34,9 +34,10 @@ function disableBelowScroll() {
   const below = document.querySelector("#below");
   below.style.overflow = "hidden";
 }
+
 function enableBelowScroll() {
   const below = document.querySelector("#below");
-  below.style.overflow = "hidden scroll";
+  below.style.overflow = "hidden auto";
 }
 
 function setPrimaryStyles(primary) {
@@ -46,7 +47,8 @@ function setPrimaryStyles(primary) {
   const below = document.querySelector("#below");
   if (below) {
     const offset = getOffsetHeight();
-    below.style.maxHeight = `calc(100vh - ${offset}px)`;
+    below.style.padding = "0 10px";
+    below.style.height = `calc(100vh - ${offset}px)`;
     below.style.scrollbarWidth = "none";
     enableBelowScroll();
   }
@@ -55,6 +57,7 @@ function setPrimaryStyles(primary) {
 
   setContainerSize();
   if (isLivestream()) {
+    printLog("is livestream");
     observeChatFrame();
   }
 }
@@ -69,12 +72,13 @@ function setContainerSize() {
 }
 
 function observeChatFrame() {
+  printLog("observing chat frame");
   const observer = new MutationObserver(() => {
     const chat = document.querySelector("ytd-live-chat-frame");
     const chatFrame = document.querySelector("iframe#chatframe");
     if (!chat || !chatFrame) return;
 
-    setChatSize(chat);
+    setChatStyles(chat);
     observeChatCollapsed(chat);
     observeChatWindow();
     observer.disconnect();
@@ -84,6 +88,7 @@ function observeChatFrame() {
 }
 
 function observeChatWindow() {
+  printLog("observing chat window");
   const observer = new MutationObserver(() => {
     printLog("chat frame detected");
 
@@ -100,7 +105,7 @@ function observeChatWindow() {
 
     if (checked && !sameVideo) {
       printLog("chat frame outdated");
-      // fix view count gone after redirection
+      // fix view count disappears after redirection
       setTimeout(() => observeChatWindow(), 500);
       return;
     } else {
@@ -135,31 +140,49 @@ function duplicateViewCount(chatWindow) {
   chatWindow.classList.add("view-count");
 
   const observer = new MutationObserver(updateDuplicateText);
-
   observer.observe(originalCount, {
     attributes: true,
     attributeFilter: ["aria-label"],
   });
 }
 
-function setChatSize(chat) {
-  const offset = getOffsetHeight();
+function undoChatStyles(chat) {
+  chat.style.cssText = `
+    height: unset;
+    position: relative;
+    z-index: unset;
+  `;
+}
 
-  chat.style.height = `calc(100vh - ${offset}px)`;
-  chat.style.margin = 0;
-  chat.style.borderRadius = 0;
+function setChatStyles(chat) {
+  const offset = getOffsetHeight();
+  chat.style.cssText = `
+    height: calc(100vh - ${offset}px);
+    margin: 0;
+    border-radius: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+  `;
 }
 
 function observeChatCollapsed(chat) {
   const observer = new MutationObserver(() => {
+    if (!isLivestream()) {
+      printLog("Not a livestream");
+      observer.disconnect();
+      return;
+    }
     if (chat.hasAttribute("collapsed")) {
       printLog("chat closed");
-      chat.style.height = "unset";
+      undoChatStyles(chat);
       enableBelowScroll();
     } else {
       printLog("chat opened");
-      const offset = getOffsetHeight();
-      chat.style.height = `calc(100vh - ${offset}px)`;
+      setChatStyles(chat);
       observeChatWindow();
       disableBelowScroll();
     }
@@ -230,19 +253,6 @@ function observeBodyStyles() {
   });
 }
 
-function createDescriptionContainer() {
-  const container = document.createElement("div");
-  container.id = "description-container";
-  // container.style.display = "none";
-  const closeButton = document.createElement("button");
-  closeButton.textContent = "x";
-  container.appendChild(closeButton);
-
-  closeButton.addEventListener("click", () => {
-    container.display = "none";
-  });
-}
-
 function setBelowStyles() {
   const chatMenu = document.querySelector("#teaser-carousel");
   chatMenu.style.display = "none";
@@ -252,23 +262,42 @@ function setBelowStyles() {
   );
   contents.style.display = "none";
 
-  createToggleButton();
+  observeComments();
   observeVideoDescription();
 }
 
-function observeCommentsHeader() {
-  const observer = new MutationObserver(() => {
-    const comments = document.querySelector("#comments");
-    const commentsHeader = comments.querySelector("#header #title");
-    if (!commentsHeader) {
-      printLog("no header detected");
-      return;
+function observeComments() {
+  const comments = document.querySelector("#comments");
+  if (!comments) return printLog("No comments section element");
+  const observer = new MutationObserver(mutationsList => {
+    for (const mutation of mutationsList) {
+      if (mutation.type === "attributes" && mutation.attributeName === "hidden") {
+        const isHidden = comments.hasAttribute("hidden");
+        if (isHidden) return;
+
+        printLog("comments detected");
+        observer.disconnect();
+
+        observeCommentsTitle();
+      }
     }
-    observer.disconnect();
-    const toggleButton = document.querySelector("#toggle-comments");
-    commentsHeader.appendChild(toggleButton);
   });
-  observer.observe(document.body, { childList: true, subtree: true });
+  observer.observe(comments, { attributes: true, attributeFilter: ["hidden"] });
+}
+
+let commentsTitle;
+
+function observeCommentsTitle() {
+  const below = document.querySelector("#below");
+  const observer = new MutationObserver(() => {
+    const titleElement = below.querySelector("#title-container h2#title");
+    if (!titleElement) return;
+
+    observer.disconnect();
+    commentsTitle = titleElement.getAttribute("aria-label");
+    createToggleButton();
+  });
+  observer.observe(below, { childList: true, subtree: true });
 }
 
 function toggleRelated(toggleButton) {
@@ -284,7 +313,7 @@ function toggleRelated(toggleButton) {
     comments.style.display = "none";
     related.style.display = "block";
     toggleButton.setAttribute("is-related", "true");
-    toggleButton.textContent = "Show Comments";
+    toggleButton.textContent = commentsTitle;
   }
   const below = document.querySelector("#below");
   const offset = document.querySelector("#expandable-metadata").offsetTop;
@@ -309,10 +338,10 @@ function createToggleButton() {
     backdrop-filter: blur(15px);
     position: sticky;
     top: 0;
-    z-index: 2000;
+    z-index: 999;
     margin-bottom: 1rem;
   `;
-  toggleButton.textContent = "Show Comments";
+  toggleButton.textContent = commentsTitle;
   toggleButton.setAttribute("is-related", "true");
   toggleButton.addEventListener("click", () => toggleRelated(toggleButton));
 
@@ -332,12 +361,17 @@ function setDescriptionStyles(restoring = false) {
     return;
   }
 
+  const below = document.querySelector("#below");
+  below.scrollTo(0, "instant");
+
   description.style.cssText = `
-    width: 100%;
     position: absolute;
     background: var(--yt-spec-base-background);
     margin: 0;
     top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     z-index: 1000;
   `;
 
@@ -358,7 +392,7 @@ function setDescriptionStyles(restoring = false) {
   const offset = getOffsetHeight(headerOffset);
   descriptionInner.style.cssText = `
     max-height: calc(100vh - ${offset}px);
-    overflow-y: scroll;
+    overflow-y: auto;
     margin: 0;
     padding: 1rem;
   `;
@@ -417,6 +451,12 @@ function observeVideoDescription() {
 
 document.addEventListener("yt-player-updated", () => {
   printLog("player updated");
+
+  const toggleButton = document.querySelector("#toggle-comments");
+  if (toggleButton) toggleButton.remove();
+
+  enableBelowScroll();
+
   findPrimaryContainer();
 });
 
