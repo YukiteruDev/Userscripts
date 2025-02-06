@@ -245,24 +245,74 @@ function setBelowStyles() {
   observeVideoDescription();
 }
 
-function setDescriptionStyles(restore = false) {
+function setDescriptionStyles(restoring = false) {
   const description = document.querySelector("ytd-watch-metadata #description");
-  if (restore) {
+  const descriptionInner = description.querySelector("#description-inner");
+  const descriptionHeader = description.querySelector("#description-header");
+
+  if (restoring) {
     description.style.cssText = "";
+    descriptionInner.style.cssText = "";
+    if (descriptionHeader) descriptionHeader.style.display = "none";
     return;
   }
 
-  const offset = getOffsetHeight();
   description.style.cssText = `
-    max-height: calc(100vh - ${offset}px);
-    overflow: scroll;
-    scrollbar-width: thin;
+    width: 100%;
     position: absolute;
     background: var(--yt-spec-base-background);
     margin: 0;
     top: 0;
-    z-index: 9999;
+    z-index: 1000;
   `;
+
+  const offset = getOffsetHeight() + 40;
+  descriptionInner.style.cssText = `
+    max-height: calc(100vh - ${offset}px);
+    overflow-y: scroll;
+    scrollbar-width: thin;
+    margin: 0;
+    padding: 1rem;
+  `;
+
+  if (descriptionHeader) {
+    printLog("description header already exist");
+    descriptionHeader.style.display = "flex";
+    const collapseButton = description.querySelector("tp-yt-paper-button#collapse");
+    descriptionHeader.appendChild(collapseButton);
+    return;
+  } else {
+    const newDescriptionHeader = createDescriptionHeader();
+    description.prepend(newDescriptionHeader);
+    description.classList.add("extended");
+  }
+}
+
+function createDescriptionHeader() {
+  const descriptionHeader = document.createElement("div");
+  descriptionHeader.id = "description-header";
+  descriptionHeader.style.cssText = `
+    height: 4rem;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1rem;
+    border-bottom: 1px solid var(--ytd-searchbox-border-color);
+  `;
+
+  const titleText = document.querySelector(".ytp-fullerscreen-edu-text").textContent;
+  const descriptionTitle = document.createElement("span");
+  descriptionTitle.textContent = titleText;
+  descriptionTitle.classList = "style-scope ytd-video-description-infocards-section-renderer";
+  descriptionTitle.style.fontSize = "1.6rem";
+  descriptionHeader.appendChild(descriptionTitle);
+
+  const collapseButton = document.querySelector("#description #collapse");
+  collapseButton.style.margin = 0;
+  collapseButton.style.minWidth = "unset";
+  descriptionHeader.appendChild(collapseButton);
+  return descriptionHeader;
 }
 
 function observeVideoDescription() {
