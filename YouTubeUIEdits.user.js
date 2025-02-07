@@ -177,22 +177,29 @@ function setChatStyles(chat) {
 }
 
 function observeChatCollapsed(chat) {
-  const observer = new MutationObserver(() => {
+  const observer = new MutationObserver(mutations => {
     if (!isLivestream()) {
       printLog("Not a livestream");
       observer.disconnect();
       return;
     }
-    if (chat.hasAttribute("collapsed")) {
-      printLog("chat closed");
-      undoChatStyles(chat);
-      enableBelowScroll();
-    } else {
-      printLog("chat opened");
-      setChatStyles(chat);
-      observeChatWindow();
-      disableBelowScroll();
-    }
+
+    mutations.forEach(mutation => {
+      if (mutation.type !== "attributes" || mutation.attributeName !== "collapsed") {
+        return;
+      }
+
+      if (chat.hasAttribute("collapsed")) {
+        printLog("chat closed");
+        undoChatStyles(chat);
+        enableBelowScroll();
+      } else {
+        printLog("chat opened");
+        setChatStyles(chat);
+        observeChatWindow();
+        disableBelowScroll();
+      }
+    });
   });
 
   observer.observe(chat, {
