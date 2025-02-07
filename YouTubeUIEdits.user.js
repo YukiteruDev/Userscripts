@@ -40,6 +40,11 @@ function enableBelowScroll() {
   below.style.overflow = "hidden auto";
 }
 
+function resetBelowPosition() {
+  const below = document.querySelector("#below");
+  below.scrollTo(0, "instant");
+}
+
 function setPrimaryStyles(primary) {
   primary.style.margin = 0;
   primary.style.padding = 0;
@@ -155,6 +160,8 @@ function undoChatStyles(chat) {
 }
 
 function setChatStyles(chat) {
+  resetBelowPosition();
+
   const offset = getOffsetHeight();
   chat.style.cssText = `
     height: calc(100vh - ${offset}px);
@@ -300,6 +307,8 @@ function observeCommentsTitle() {
   observer.observe(below, { childList: true, subtree: true });
 }
 
+let initialOffset = 0;
+
 function toggleRelated(toggleButton) {
   const isRelated = toggleButton.getAttribute("is-related");
   const comments = document.querySelector("#comments");
@@ -316,8 +325,7 @@ function toggleRelated(toggleButton) {
     toggleButton.textContent = commentsTitle;
   }
   const below = document.querySelector("#below");
-  const offset = document.querySelector("#expandable-metadata").offsetTop;
-  below.scrollTo({ top: offset, behavior: "smooth" });
+  below.scrollTo({ top: initialOffset, behavior: "smooth" });
 }
 
 function createToggleButton() {
@@ -329,24 +337,33 @@ function createToggleButton() {
   const comments = document.querySelector("#comments");
   comments.style.display = "none";
 
-  const toggleButton = document.createElement("button");
-  toggleButton.id = "toggle-comments";
-  toggleButton.classList =
-    "yt-spec-button-shape-next yt-spec-button-shape-next--outline yt-spec-button-shape-next--mono yt-spec-button-shape-next--size-m";
-  toggleButton.style.cssText = `
+  const toggleContainer = document.createElement("div");
+  toggleContainer.id = "toggle-comments";
+  toggleContainer.style.cssText = `
+    padding-top: 1rem;
     width: 100%;
-    backdrop-filter: blur(15px);
     position: sticky;
     top: 0;
     z-index: 999;
     margin-bottom: 1rem;
   `;
+
+  const toggleButton = document.createElement("button");
+  toggleButton.id = "toggle-comments-button";
+  toggleButton.classList =
+    "yt-spec-button-shape-next yt-spec-button-shape-next--outline yt-spec-button-shape-next--mono yt-spec-button-shape-next--size-m";
+  toggleButton.style.cssText = `
+    width: 100%;
+    backdrop-filter: blur(15px);
+  `;
   toggleButton.textContent = commentsTitle;
   toggleButton.setAttribute("is-related", "true");
   toggleButton.addEventListener("click", () => toggleRelated(toggleButton));
 
+  toggleContainer.appendChild(toggleButton);
   const related = document.querySelector("#related");
-  related.before(toggleButton);
+  related.before(toggleContainer);
+  initialOffset = toggleContainer.offsetTop;
 }
 
 function setDescriptionStyles(restoring = false) {
@@ -361,8 +378,7 @@ function setDescriptionStyles(restoring = false) {
     return;
   }
 
-  const below = document.querySelector("#below");
-  below.scrollTo(0, "instant");
+  resetBelowPosition();
 
   description.style.cssText = `
     position: absolute;
