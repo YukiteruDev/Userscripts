@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        YouTube UI Edits
 // @namespace   Violentmonkey Scripts
-// @match       https://www.youtube.com/watch*
+// @match       https://www.youtube.com/*
 // @grant       none
 // @version     0.10
 // @author      -
@@ -23,6 +23,12 @@ function isLivestream() {
   return liveBadge !== null;
 }
 
+function isWideMode() {
+  const page = document.querySelector("ytd-watch-flexy");
+  const isTwoColumns = page.hasAttribute("is-two-columns_");
+  return isTwoColumns;
+}
+
 function getOffsetHeight(offset = 0) {
   const topHeight = document.querySelector("#masthead-container").offsetHeight;
   const playerHeight = document.querySelector("#player").offsetHeight;
@@ -32,17 +38,17 @@ function getOffsetHeight(offset = 0) {
 
 function disableBelowScroll() {
   const below = document.querySelector("#below");
-  below.style.overflow = "hidden";
+  if (below) below.style.overflow = "hidden";
 }
 
 function enableBelowScroll() {
   const below = document.querySelector("#below");
-  below.style.overflow = "hidden auto";
+  if (below) below.style.overflow = "hidden auto";
 }
 
 function resetBelowPosition() {
   const below = document.querySelector("#below");
-  below.scrollTo(0, "instant");
+  if (below) below.scrollTo(0, "instant");
 }
 
 function setPrimaryStyles(primary) {
@@ -221,7 +227,8 @@ function observeVideoElement() {
       setVideoSize(video);
 
       const observer = new MutationObserver(() => {
-        setVideoSize(video); // Reapply custom styles when the `style` attribute changes
+        setVideoSize(video);
+        observer.disconnect();
       });
 
       observer.observe(video, {
@@ -235,6 +242,7 @@ function observeVideoElement() {
 }
 
 function setVideoSize(video) {
+  // printLog(`Is wide mode: ${isWideMode()}`);
   if (!video) return;
   video.style.setProperty("height", "inherit", "important");
   video.style.setProperty("width", "inherit", "important");
@@ -243,7 +251,7 @@ function setVideoSize(video) {
 
 function findPrimaryContainer() {
   const observer = new MutationObserver(() => {
-    const primary = document.querySelector("#primary");
+    const primary = document.querySelector("#columns #primary");
     if (primary) {
       setPrimaryStyles(primary);
       observeVideoElement();
@@ -256,6 +264,7 @@ function findPrimaryContainer() {
 
 function observeBodyStyles() {
   const observer = new MutationObserver(mutationsList => {
+    if (!getVideoId()) return;
     for (const mutation of mutationsList) {
       if (mutation.type === "attributes" && mutation.attributeName === "style") {
         // fix scrollbars showing up after redirection
@@ -277,7 +286,7 @@ function setBelowStyles() {
   const contents = document.querySelector(
     "ytd-watch-metadata > ytd-metadata-row-container-renderer"
   );
-  contents.style.display = "none";
+  if (contents) contents.style.display = "none";
 
   observeComments();
   observeVideoDescription();
@@ -475,18 +484,58 @@ function observeVideoDescription() {
   });
 }
 
-document.addEventListener("yt-player-updated", () => {
-  printLog("player updated");
+let hasNavigated = false;
+let hasPlayerUpdated = false;
 
-  const toggleButton = document.querySelector("#toggle-comments");
-  if (toggleButton) toggleButton.remove();
+function checkBoth() {
+  if (hasNavigated && hasPlayerUpdated) {
+    printLog("Both events triggered on this redirection");
+    const videoId = getVideoId();
+
+    if (!videoId) return printLog("Not a video");
+
+    printLog(`Is wide mode: ${isWideMode()}`);
+
+    findPrimaryContainer();
+  }
+}
+
+window.navigation.addEventListener("navigate", () => {
+  hasNavigated = false;
+  hasPlayerUpdated = false;
+  printLog("Navigation started: flags reset");
 
   enableBelowScroll();
+  const toggleButton = document.querySelector("#toggle-comments");
+  if (toggleButton) {
+    toggleButton.remove();
+    const related = document.querySelector("#related");
+    related.style.display = "block";
+  }
+});
 
-  findPrimaryContainer();
+document.addEventListener("yt-navigate-finish", () => {
+  printLog("Navigation finished");
+
+  if (!getVideoId) {
+    document.body.style.overflow = "auto";
+    return;
+  }
+
+  hasNavigated = true;
+  checkBoth();
+});
+
+document.addEventListener("yt-player-updated", () => {
+  printLog("Player updated");
+
+  if (!getVideoId) return;
+
+  hasPlayerUpdated = true;
+  checkBoth();
 });
 
 window.addEventListener("resize", () => {
   printLog("Window resized.");
-  setVideoSize();
+  // setVideoSize();
 });
