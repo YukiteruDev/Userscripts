@@ -31,23 +31,31 @@ function isWideMode() {
 
 function getOffsetHeight(offset = 0) {
   const topHeight = document.querySelector("#masthead-container").offsetHeight;
+  if (isWideMode()) return topHeight + offset;
+
   const playerHeight = document.querySelector("#player").offsetHeight;
   const height = playerHeight + topHeight;
   return height + offset;
 }
 
-function disableBelowScroll() {
+function getBelowTag() {
+  const secondary = document.querySelector("#columns #secondary #secondary-inner");
   const below = document.querySelector("#below");
+  return isWideMode() ? secondary : below;
+}
+
+function disableBelowScroll() {
+  const below = getBelowTag();
   if (below) below.style.overflow = "hidden";
 }
 
 function enableBelowScroll() {
-  const below = document.querySelector("#below");
+  const below = getBelowTag();
   if (below) below.style.overflow = "hidden auto";
 }
 
 function resetBelowPosition() {
-  const below = document.querySelector("#below");
+  const below = getBelowTag();
   if (below) below.scrollTo(0, "instant");
 }
 
@@ -55,7 +63,16 @@ function setPrimaryStyles(primary) {
   primary.style.margin = 0;
   primary.style.padding = 0;
 
-  const below = document.querySelector("#below");
+  if (isWideMode()) {
+    const secondary = document.querySelector("#columns #secondary");
+    secondary.style.padding = 0;
+    const inner = secondary.querySelector(" #secondary-inner");
+
+    const comments = document.querySelector("#comments");
+    inner.appendChild(comments);
+  }
+
+  const below = getBelowTag();
   if (below) {
     const offset = getOffsetHeight();
     below.style.padding = "0 10px";
@@ -314,16 +331,15 @@ function observeComments() {
 let commentsTitle;
 
 function observeCommentsTitle() {
-  const below = document.querySelector("#below");
   const observer = new MutationObserver(() => {
-    const titleElement = below.querySelector("#title-container h2#title");
+    const titleElement = document.querySelector("#title-container h2#title");
     if (!titleElement) return;
 
     observer.disconnect();
     commentsTitle = titleElement.getAttribute("aria-label");
     createToggleButton();
   });
-  observer.observe(below, { childList: true, subtree: true });
+  observer.observe(document.body, { childList: true, subtree: true });
 }
 
 let initialOffset = 0;
@@ -343,7 +359,7 @@ function toggleRelated(toggleButton) {
     toggleButton.setAttribute("is-related", "true");
     toggleButton.textContent = commentsTitle;
   }
-  const below = document.querySelector("#below");
+  const below = getBelowTag();
   below.scrollTo({ top: initialOffset, behavior: "smooth" });
 }
 
