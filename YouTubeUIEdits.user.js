@@ -138,6 +138,9 @@ function duplicateViewCount(chatWindow) {
   function updateDuplicateText() {
     const ariaLabel = originalCount.getAttribute("aria-label");
     duplicateCount.textContent = ariaLabel.trim();
+
+    const dateText = document.querySelector("#info-container > #info");
+    duplicateCount.setAttribute("title", dateText?.textContent);
   }
 
   updateDuplicateText();
