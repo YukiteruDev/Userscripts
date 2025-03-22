@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube Auto Like
 // @namespace    http://tampermonkey.net/
-// @version      1.25
+// @version      1.26
 // @description  Automatically likes a video or livestream on YouTube
 // @author       Yukiteru
 // @match        https://www.youtube.com/*
@@ -23,8 +23,10 @@ function printLog(message) {
 const config_desc = {
   ratio: {
     name: "Like after percentage",
-    processor: "int_range-1-100",
+    processor: "int",
     value: 50,
+    min: 1,
+    max: 100,
   },
   livestream: {
     name: "Auto like livestreams",
