@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         Reddit Media Downloader
 // @namespace    http://tampermonkey.net/
-// @version      0.83
+// @version      0.84
 // @description  Adds a download button to Reddit posts with images or videos.
 // @author       Yukiteru
 // @match        https://www.reddit.com/*
 // @grant        GM_download
 // @grant        GM_log
+// @license      MIT
 // @run-at       document-idle
 // ==/UserScript==
 
