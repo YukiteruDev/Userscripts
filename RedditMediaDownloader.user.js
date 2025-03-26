@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Reddit Media Downloader
 // @namespace    http://tampermonkey.net/
-// @version      0.81
+// @version      0.82
 // @description  Adds a download button to Reddit posts with images or videos.
 // @author       Yukiteru
 // @match        https://www.reddit.com/*
@@ -168,20 +168,15 @@
 
     // --- Get Title ---
     let title = "Reddit_Media"; // Default title
-    const article = postElement.closest("article");
-    const h1Title = document.querySelector("main h1"); // More specific for post pages
 
-    if (h1Title && postElement.closest("main")) {
-      title = h1Title.textContent.trim();
-    } else if (article && article.getAttribute("aria-label")) {
-      title = article.getAttribute("aria-label").trim();
-    } else {
-      // Fallback: Try finding a title-like element within the post itself
-      const internalTitle = postElement.querySelector('[slot="title"], [data-testid="post-title"]');
-      if (internalTitle) {
-        title = internalTitle.textContent.trim();
-      }
-    }
+    // const article = postElement.closest("article");
+    // const h1Title = document.querySelector("main h1"); // More specific for post pages
+
+    const subredditName = postElement.getAttribute("subreddit-name");
+    const postId = postElement.getAttribute("id").slice(3);
+    const postTitle = postElement.getAttribute("post-title").slice(0, 20);
+
+    title = `${subredditName}_${postId}_${postTitle.trim()}`;
     const cleanTitle = sanitizeFilename(title);
 
     // --- Create Button ---
