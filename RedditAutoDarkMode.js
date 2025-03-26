@@ -3,14 +3,14 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.reddit.com/*
 // @grant       none
-// @version     1.0
+// @version     1.02
 // @author      Yukiteru
 // @description Change Reddit's theme based on your system theme
 // @license     MIT
 // ==/UserScript==
 
 function getToggleSwitch() {
-  return document.querySelector('faceplate-switch-input');
+  return document.querySelector('#darkmode-list-item > div > span.flex.items-center.shrink-0 > span > faceplate-switch-input');
 }
 
 function isDarkMode() {
@@ -22,7 +22,7 @@ function toggleTheme(isDark) {
 }
 
 const darkMedia = window.matchMedia('(prefers-color-scheme: dark)');
-setTimeout(() => toggleTheme(darkMedia.matches), 300)
+setTimeout(() => toggleTheme(darkMedia.matches), 500)
 
 darkMedia.addEventListener('change', e => {
   toggleTheme(e.matches); // toggle theme when system theme is changed
