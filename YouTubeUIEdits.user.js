@@ -18,6 +18,12 @@ function getVideoId() {
   return videoId;
 }
 
+function getVideoDimensions() {
+  const height = document.querySelector('meta[property="og:video:height"]').getAttribute("content");
+  const width = document.querySelector('meta[property="og:video:width"]').getAttribute("content");
+  printLog(`${height} ${width}`);
+}
+
 function isLivestream() {
   const liveBadge = document.querySelector(".ytp-live");
   return liveBadge !== null;
@@ -70,6 +76,12 @@ function setPrimaryStyles(primary) {
 
     const comments = document.querySelector("#comments");
     inner.appendChild(comments);
+
+    const metadata = document.querySelector("ytd-watch-metadata");
+    inner.prepend(metadata);
+
+    const topRow = metadata.querySelector("#top-row");
+    topRow.style.flexDirection = "column";
   }
 
   const below = getBelowTag();
@@ -540,6 +552,8 @@ document.addEventListener("yt-navigate-finish", () => {
 
   hasNavigated = true;
   checkBoth();
+
+  getVideoDimensions();
 });
 
 document.addEventListener("yt-player-updated", () => {
