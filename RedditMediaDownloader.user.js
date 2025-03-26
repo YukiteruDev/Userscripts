@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         Reddit Media Downloader
 // @namespace    http://tampermonkey.net/
-// @version      0.80
+// @version      0.81
 // @description  Adds a download button to Reddit posts with images or videos.
-// @author       Your Name (or handle)
+// @author       Yukiteru
 // @match        https://www.reddit.com/*
 // @grant        GM_download
 // @grant        GM_log
@@ -62,58 +62,37 @@
 
   function processPost(postElement) {
     if (!postElement || postElement.classList.contains(PROCESSED_MARKER_CLASS)) {
+      GM_log("invalid element or already processed");
       return; // Already processed or invalid element
     }
 
     // Check for shadow root readiness - sometimes it takes a moment
-    if (!postElement.shadowRoot) {
-      // GM_log("Post shadowRoot not ready, will retry.", postElement);
+    const buttonsContainer = postElement.shadowRoot?.querySelector(".shreddit-post-container");
+    if (!buttonsContainer) {
+      GM_log("Post shadowRoot not ready, will retry.");
       // Re-check shortly - avoids infinite loops if it never appears
       setTimeout(() => processPost(postElement), 250);
       return;
     }
 
-    const postContainer = postElement.shadowRoot.querySelector(".shreddit-post-container");
-    if (!postContainer) {
-      // GM_log("Could not find .shreddit-post-container in shadowRoot", postElement);
-      // Mark as processed even if container isn't found to avoid retrying indefinitely
-      postElement.classList.add(PROCESSED_MARKER_CLASS);
-      return;
-    }
-
     // Prevent adding multiple buttons if processing runs slightly delayed
-    if (postContainer.querySelector(".rmd-download-button")) {
+    if (buttonsContainer.querySelector(".rmd-download-button")) {
+      GM_log("Already processed, skipping");
       postElement.classList.add(PROCESSED_MARKER_CLASS); // Ensure marked
       return;
     }
 
-    const galleryContainer = postElement.querySelector(
-      'shreddit-async-loader[bundlename="gallery_carousel"]'
-    );
-    const videoContainer = postElement.querySelector(
-      'shreddit-async-loader[bundlename="shreddit_player_2_loader"]'
-    );
-    const imageContainer = postElement.querySelector("shreddit-media-lightbox-listener");
-
-    let mediaType;
-    if (galleryContainer) {
-      GM_log("Is Gallery");
-      mediaType = "gallery";
-    } else if (videoContainer) {
-      GM_log("Is Video");
-      mediaType = "video";
-    } else if (imageContainer) {
-      GM_log("Is Image");
-      mediaType = "image";
-    } else {
-      GM_log("No media container found in post");
-    }
+    const postType = postElement.getAttribute("post-type");
+    // GM_log(postType);
 
     let mediaUrls = [];
 
     // --- Media Detection ---
-    switch (mediaType) {
+    switch (postType) {
       case "gallery":
+        const galleryContainer = postElement.querySelector(
+          'shreddit-async-loader[bundlename="gallery_carousel"]'
+        );
         const galleryClone = galleryContainer.querySelector("gallery-carousel").cloneNode(true);
         const imageContainers = galleryClone.querySelectorAll("ul > li");
         imageContainers.forEach(container => {
@@ -125,6 +104,7 @@
         });
         break;
       case "image":
+        const imageContainer = postElement.querySelector("shreddit-media-lightbox-listener");
         const img = imageContainer.querySelector('img[src^="https://preview.redd.it"]');
         if (img) {
           const originalUrl = getOriginalImageUrl(img.src);
@@ -132,11 +112,14 @@
         }
         break;
       case "video":
+        const videoContainer = postElement.querySelector(
+          'shreddit-async-loader[bundlename="shreddit_player_2_loader"]'
+        );
         const videoPlayer = videoContainer.querySelector("shreddit-player-2");
         // Need to wait for video player's shadow DOM and video tag if necessary
         const checkVideo = player => {
           if (!player.shadowRoot) {
-            GM_log("Video player shadowRoot not ready, retrying...", player);
+            GM_log("Video player shadowRoot not ready, retrying...");
             setTimeout(() => checkVideo(player), 250);
             return;
           }
@@ -150,21 +133,13 @@
               bestSrc = sources[sources.length - 1].src;
             }
 
-            // Sometimes the src is a blob URL, check attributes for direct links
-            const dashUrl = player.getAttribute("dash-url");
-            const hlsUrl = player.getAttribute("hls-url");
-            // Prefer direct MP4 if found, otherwise DASH/HLS might need external tools
-            // For simplicity, we'll try the blob/video src first.
-            // If dashUrl exists and seems like an mp4, maybe prefer it? Needs testing.
-            // e.g., if (dashUrl && dashUrl.includes('.mp4')) bestSrc = dashUrl;
-
             mediaUrls.push({ url: bestSrc, type: "video" });
-            addDownloadButton(postElement, postContainer, mediaUrls);
+            addDownloadButton(postElement, buttonsContainer, mediaUrls);
           } else if (video && !video.src) {
-            GM_log("Video tag found but no src yet, retrying...", video);
+            GM_log("Video tag found but no src yet, retrying...");
             setTimeout(() => checkVideo(player), 500); // Wait longer for video src
           } else if (!video) {
-            GM_log("Video tag not found in player shadowRoot yet, retrying...", player.shadowRoot);
+            GM_log("Video tag not found in player shadowRoot yet, retrying...");
             setTimeout(() => checkVideo(player), 250);
           } else {
             // Video player exists but no media found after checks
@@ -179,21 +154,17 @@
         }
     }
 
-    GM_log(`${mediaUrls.length} media urls collected`);
-
     // Add button immediately for images/galleries if URLs were found
-    if (mediaUrls.length > 0 && (mediaType === "image" || mediaType === "gallery")) {
-      GM_log("Found Media");
-      addDownloadButton(postElement, postContainer, mediaUrls);
+    if (mediaUrls.length > 0 && (postType === "image" || postType === "gallery")) {
+      addDownloadButton(postElement, buttonsContainer, mediaUrls);
     } else {
       // If no media found after checking all types, mark as processed
-      GM_log("No Media Found");
       postElement.classList.add(PROCESSED_MARKER_CLASS);
     }
   }
 
-  function addDownloadButton(postElement, postContainer, mediaUrls) {
-    if (postContainer.querySelector(".rmd-download-button")) return; // Double check
+  function addDownloadButton(postElement, buttonsContainer, mediaUrls) {
+    if (buttonsContainer.querySelector(".rmd-download-button")) return; // Double check
 
     // --- Get Title ---
     let title = "Reddit_Media"; // Default title
@@ -236,11 +207,9 @@
           // Skip blob URLs if we couldn't resolve them better earlier
           if (url.startsWith("blob:")) {
             GM_log(`Skipping download for unresolved blob URL: ${url} in post: ${cleanTitle}`);
-            // Maybe show a small notification to the user?
-            if (mediaUrls.length === 1)
-              alert(
-                `Cannot directly download this video format (blob). Try looking for download options within the video player controls if available.`
-              );
+            alert(
+              `This video is in blob format which this script can't handle, try use a external method to download it.`
+            );
             return;
           }
 
@@ -276,11 +245,11 @@
 
     // --- Append Button ---
     // Insert after the comments button if possible, otherwise just append
-    const commentsButton = postContainer.querySelector("shreddit-comment-button");
-    if (commentsButton && commentsButton.parentElement === postContainer) {
+    const commentsButton = buttonsContainer.querySelector("shreddit-comment-button");
+    if (commentsButton && commentsButton.parentElement === buttonsContainer) {
       commentsButton.insertAdjacentElement("afterend", downloadButton);
     } else {
-      postContainer.appendChild(downloadButton);
+      buttonsContainer.appendChild(downloadButton);
     }
 
     // Mark as processed AFTER button is successfully added
