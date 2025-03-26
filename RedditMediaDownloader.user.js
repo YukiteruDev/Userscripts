@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Reddit Media Downloader
 // @namespace    http://tampermonkey.net/
-// @version      0.82
+// @version      0.83
 // @description  Adds a download button to Reddit posts with images or videos.
 // @author       Yukiteru
 // @match        https://www.reddit.com/*
@@ -185,6 +185,15 @@
     downloadButton.setAttribute("name", "comments-action-button"); // Match existing buttons
     downloadButton.setAttribute("type", "button");
 
+    const iconContainer = document.createElement("span");
+    iconContainer.setAttribute("class", "flex text-16 mr-[var(--rem6)]");
+
+    const buttonIcon = buttonsContainer
+      .querySelector('svg[icon-name="downvote-outline"]')
+      .cloneNode(true);
+    iconContainer.appendChild(buttonIcon);
+    downloadButton.appendChild(iconContainer);
+
     const buttonSpan = document.createElement("span");
     buttonSpan.className = BUTTON_SPAN_CLASSES;
     buttonSpan.textContent = "Download";
@@ -240,12 +249,8 @@
 
     // --- Append Button ---
     // Insert after the comments button if possible, otherwise just append
-    const commentsButton = buttonsContainer.querySelector("shreddit-comment-button");
-    if (commentsButton && commentsButton.parentElement === buttonsContainer) {
-      commentsButton.insertAdjacentElement("afterend", downloadButton);
-    } else {
-      buttonsContainer.appendChild(downloadButton);
-    }
+    const shareButton = buttonsContainer.querySelector("[name='share-button']");
+    shareButton.insertAdjacentElement("afterend", downloadButton);
 
     // Mark as processed AFTER button is successfully added
     postElement.classList.add(PROCESSED_MARKER_CLASS);
