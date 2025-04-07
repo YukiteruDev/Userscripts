@@ -7,6 +7,8 @@
 ; 3. Top Edge (excluding corner): Scroll switches application tabs (Ctrl+PgUp/PgDn).
 ; ==============================================================================
 
+#Requires AutoHotkey v1.1.36+
+
 #Persistent          ; Keep the script running
 #SingleInstance force ; Avoid running multiple copies
 CoordMode, Mouse, Screen ; *** Use Screen coordinates (essential for multi-monitor & screen edges) ***
