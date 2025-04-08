@@ -9,6 +9,7 @@
 // @grant        GM_download
 // @grant        GM_log
 // @run-at       document-idle
+// @license      MIT
 // ==/UserScript==
 
 (function() {
