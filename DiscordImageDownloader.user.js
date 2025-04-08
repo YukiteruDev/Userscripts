@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Discord Image Downloader
 // @namespace    http://tampermonkey.net/
-// @version      1.05
+// @version      1.06
 // @description  Adds a download button to images and GIFs in Discord.
 // @author       Yukiteru
 // @match        https://discord.com/*
@@ -180,20 +180,9 @@
         }
 
         // 2. If no existing group, CREATE one
-        // GM_log('findButtonTargetContainer: No existing hoverButtonGroup found. Creating one.');
-
-        // const groupClass = findActualClassName(document.body, 'hoverButtonGroup'); // Prefix lookup
-        // if (!groupClass) {
-        //      GM_log('findButtonTargetContainer: Could not resolve class name for hoverButtonGroup. Cannot create group.');
-        //      return null;
-        // }
-
         const newGroup = document.createElement('div');
-        // TODO newGroup.classList.add(groupClass);
-        newGroup.classList.add('hoverButton__06ab4');
         newGroup.classList.add('custom-dl-hover-group'); // Custom marker
 
-        // --- FIX: Append the new group intelligently ---
         // Try to append it next to where other buttons might be, or as a direct child.
         // For inline embeds, inside the 'imageContainer__' seems appropriate if it exists.
         let appendTarget = parentMediaBlock; // Default target
